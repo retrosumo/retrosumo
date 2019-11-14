@@ -1,6 +1,8 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Waypoint } from "react-waypoint";
 import { useToasts } from "react-toast-notifications";
+import { Link, useHistory, useLocation, useParams } from "react-router-dom";
+import Modal from "react-modal";
 import axios from "axios";
 import { formatDistance, parseISO } from "date-fns";
 import classNames from "classnames";
@@ -24,6 +26,8 @@ export const Post = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     const { addToast } = useToasts();
+
+    const { id: userId } = useContext(UserContext);
 
     const showToast = (message, customOptions = {}) => {
         const defaultOptions = {
@@ -119,13 +123,15 @@ export const Post = () => {
     const isEmpty = posts.length === 0;
 
     return (
-        <>
-            <PostForm
-                text={text}
-                isValid={isValid}
-                setText={setText}
-                storePost={storePost}
-            />
+        <div className="container mx-auto max-w-xl">
+            {userId && (
+                <PostForm
+                    text={text}
+                    isValid={isValid}
+                    setText={setText}
+                    storePost={storePost}
+                />
+            )}
             <PostFeed
                 posts={posts}
                 deletePost={deletePost}
@@ -143,7 +149,7 @@ export const Post = () => {
                     You have reached the end of the feed.
                 </End>
             )}
-        </>
+        </div>
     );
 };
 
@@ -160,12 +166,12 @@ export const PostForm = ({ isValid, text, setText, storePost }) => {
         "bg-pink-600 text-white rounded py-2 px-3 font-semibold uppercase tracking-widest text-sm focus:outline-none focus:shadow-outline",
         {
             "hover:bg-pink-700": isValid,
-            "opacity-50 cursor-not-allowed": !isValid,
+            "opacity-50 cursor-not-allowed": !isValid
         }
     );
 
     return (
-        <form className="my-8" onSubmit={submit}>
+        <form className="mt-8" onSubmit={submit}>
             <TextareaField
                 autoFocus
                 value={text}
@@ -218,7 +224,7 @@ export const EditPostForm = ({ onCancel, originalText = "", updatePost }) => {
         "bg-pink-600 text-white rounded py-2 px-3 font-semibold uppercase tracking-widest text-sm focus:outline-none focus:shadow-outline",
         {
             "hover:bg-pink-700": isValid,
-            "opacity-50 cursor-not-allowed": !isValid,
+            "opacity-50 cursor-not-allowed": !isValid
         }
     );
 
@@ -250,7 +256,7 @@ export const EditPostForm = ({ onCancel, originalText = "", updatePost }) => {
 };
 
 export const PostFeed = ({ deletePost, posts, updatePost }) => (
-    <div>
+    <div className="mt-8">
         {posts.map(post => (
             <PostFeedItem
                 key={post.id}
@@ -262,7 +268,7 @@ export const PostFeed = ({ deletePost, posts, updatePost }) => (
     </div>
 );
 
-const PostFeedItem = ({ deletePost, post, updatePost }) => {
+const PostFeedItem = ({ deletePost, isModal = false, post, updatePost }) => {
     const { created_at, id, text, user } = post;
 
     const [isEditing, setIsEditing] = useState(false);
@@ -280,6 +286,16 @@ const PostFeedItem = ({ deletePost, post, updatePost }) => {
         });
     };
 
+    const location = useLocation();
+
+    const postLink = {
+        pathname: `/post/${id}`,
+        state: {
+            background: location,
+            post
+        }
+    };
+
     return (
         <div className="mb-8 bg-white shadow rounded px-8 py-6">
             <div className="flex justify-between items-center mb-4">
@@ -289,7 +305,14 @@ const PostFeedItem = ({ deletePost, post, updatePost }) => {
                     </span>{" "}
                     posted an update.
                 </div>
-                <div className="text-sm text-gray-600">{timestamp}</div>
+                {isModal && (
+                    <div className="text-sm text-gray-600">{timestamp}</div>
+                )}
+                {!isModal && (
+                    <Link to={postLink} className="text-sm text-gray-600">
+                        {timestamp}
+                    </Link>
+                )}
             </div>
             {!isEditing && (
                 <>
@@ -322,6 +345,62 @@ const PostFeedItem = ({ deletePost, post, updatePost }) => {
                 />
             )}
         </div>
+    );
+};
+
+export const PostShow = () => {
+    const [post, setPost] = useState(null);
+    const history = useHistory();
+    const location = useLocation();
+    const { id } = useParams();
+
+    const postFromLocationState = location.state && location.state.post;
+
+    useEffect(() => {
+        const loadPost = async () => {
+            try {
+                const { data: postFromServer } = await axios.get(
+                    `/api/posts/${id}`
+                );
+
+                setPost(postFromServer);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        if (postFromLocationState) {
+            setPost(postFromLocationState);
+        } else {
+            loadPost();
+        }
+    }, [postFromLocationState]);
+
+    const close = () => {
+        if (history.action === "POP") {
+            history.push("/");
+        } else {
+            history.goBack();
+        }
+    };
+
+    return (
+        <Modal
+            isOpen={true}
+            onRequestClose={close}
+            overlayClassName="fixed inset-0 bg-black-faded"
+            className="container rounded mx-auto my-8 max-w-xl focus:outline-none"
+        >
+            <div className="flex justify-end">
+                <button
+                    onClick={close}
+                    className="text-gray-400 hover:text-white leading-none text-4xl font-light focus:outline-none focus:shadow-outline"
+                >
+                    &times;
+                </button>
+            </div>
+            {post && <PostFeedItem post={post} isModal={true} />}
+        </Modal>
     );
 };
 

@@ -23,6 +23,20 @@ class PostController extends Controller
     }
 
     /**
+     * Get the specified post.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Post  $post
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Request $request, Post $post)
+    {
+        $post->load('user');
+        
+        return $post;
+    }
+
+    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -36,7 +50,7 @@ class PostController extends Controller
 
         $post = $user->posts()->create($data);
 
-        $post->load('user');        
+        $post->load('user');
 
         return response($post, 201);
     }
