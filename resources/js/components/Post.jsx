@@ -10,6 +10,8 @@ import classNames from "classnames";
 import UserContext from "../contexts/User";
 import { useHotKey } from "../hooks/useHotKey";
 
+import Avatar from "./Avatar";
+import { Button } from "./Button";
 import { TextareaField } from "./Form";
 import { Empty, End, Loader } from "./ListStates";
 
@@ -27,7 +29,7 @@ export const Post = () => {
 
     const { addToast } = useToasts();
 
-    const { id: userId } = useContext(UserContext);
+    const { user } = useContext(UserContext);
 
     const showToast = (message, customOptions = {}) => {
         const defaultOptions = {
@@ -124,7 +126,7 @@ export const Post = () => {
 
     return (
         <div className="container mx-auto max-w-xl">
-            {userId && (
+            {user && (
                 <PostForm
                     text={text}
                     isValid={isValid}
@@ -162,14 +164,6 @@ export const PostForm = ({ isValid, text, setText, storePost }) => {
 
     useHotKey(HOTKEY_CODE, submit, [text, isValid]);
 
-    const submitButtonClass = classNames(
-        "bg-pink-600 text-white rounded py-2 px-3 font-semibold uppercase tracking-widest text-sm focus:outline-none focus:shadow-outline",
-        {
-            "hover:bg-pink-700": isValid,
-            "opacity-50 cursor-not-allowed": !isValid
-        }
-    );
-
     return (
         <form className="mt-8" onSubmit={submit}>
             <TextareaField
@@ -179,13 +173,7 @@ export const PostForm = ({ isValid, text, setText, storePost }) => {
                 placeholder="What's going on?"
             />
             <div className="text-right">
-                <button
-                    type="submit"
-                    disabled={!isValid}
-                    className={submitButtonClass}
-                >
-                    Post
-                </button>
+                <Button disabled={!isValid} text="Post" />
             </div>
         </form>
     );
@@ -243,13 +231,7 @@ export const EditPostForm = ({ onCancel, originalText = "", updatePost }) => {
                 >
                     Cancel
                 </button>
-                <button
-                    type="submit"
-                    disabled={!isValid}
-                    className={submitButtonClass}
-                >
-                    Save
-                </button>
+                <Button disabled={!isValid} text="Save" />
             </div>
         </form>
     );
@@ -277,8 +259,8 @@ const PostFeedItem = ({ deletePost, isModal = false, post, updatePost }) => {
         addSuffix: true
     });
 
-    const { id: userId } = useContext(UserContext);
-    const canEdit = userId === user.id;
+    const { user: currentUser } = useContext(UserContext);
+    const canEdit = currentUser.id === user.id;
 
     const onUpdatePost = text => {
         updatePost(id, text, () => {
@@ -296,13 +278,18 @@ const PostFeedItem = ({ deletePost, isModal = false, post, updatePost }) => {
         }
     };
 
+    const hasAvatar = user.avatar_url !== null;
+
     return (
         <div className="mb-8 bg-white shadow rounded px-8 py-6">
             <div className="flex justify-between items-center mb-4">
-                <div className="text-gray-700">
-                    <span className="font-semibold text-black">
+                <div className="flex items-center text-gray-700">
+                    {hasAvatar && (
+                        <Avatar src={user.avatar_url} className="mr-2" />
+                    )}
+                    <span className="font-semibold text-black mr-1">
                         {user.name}
-                    </span>{" "}
+                    </span>
                     posted an update.
                 </div>
                 {isModal && (

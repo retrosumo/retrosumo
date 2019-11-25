@@ -3,6 +3,7 @@
 namespace App;
 
 use Laravel\Passport\HasApiTokens;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,7 +27,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password', 'remember_token', 'avatar_path'
     ];
 
     /**
@@ -37,6 +38,17 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    protected $appends = ["avatar_url"];
+
+    public function getAvatarUrlAttribute()
+    {
+        if ($this->avatar_path) {
+            return Storage::url($this->avatar_path);
+        }
+
+        return null;
+    }
 
     public function posts()
     {

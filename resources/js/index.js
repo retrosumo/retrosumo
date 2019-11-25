@@ -8,14 +8,12 @@ const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
     .getAttribute("content");
 
-let userId = document
-    .querySelector('meta[name="user-id"]')
-    .getAttribute("content");
-
-userId = userId.length > 0 ? parseInt(userId) : null;
+let user = JSON.parse(
+    document.querySelector('meta[name="user"]').getAttribute("content")
+);
 
 const el = document.getElementById("app");
 
 Modal.setAppElement(el);
 
-render(<App csrfToken={csrfToken} userId={userId} />, el);
+render(<App csrfToken={csrfToken} user={user} />, el);

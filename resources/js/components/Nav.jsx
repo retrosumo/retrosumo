@@ -1,26 +1,41 @@
 import React, { useContext } from "react";
 import ScrollToTop from "react-scroll-up";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { ArrowUp } from "react-feather";
 
 import UserContext from "../contexts/User";
+import Avatar from "../components/Avatar";
 
 export const Nav = ({ csrfToken }) => {
-    const { id: userId } = useContext(UserContext);
+    const { user } = useContext(UserContext);
+
+    const hasAvatar = user.avatar_url !== null;
 
     return (
         <nav className="bg-white shadow px-8 py-4">
             <div className="container mx-auto flex justify-between items-center">
                 <Link to="/">Retrosumo</Link>
-                {userId && (
-                    <form method="post" action="/logout">
+                {user && (
+                    <form
+                        method="post"
+                        action="/logout"
+                        className="flex -mx-4 text-gray-800"
+                    >
                         <input type="hidden" name="_token" value={csrfToken} />
-                        <button type="submit" className="font-semibold">
+                        <NavLink
+                            to="/profile"
+                            className="mx-4 flex items-center"
+                            activeClassName="text-pink-600 font-semibold"
+                        >
+                            {hasAvatar && <Avatar src={user.avatar_url} className="mr-2" />}
+                            {user.name}
+                        </NavLink>
+                        <button type="submit" className="mx-4">
                             Logout
                         </button>
                     </form>
                 )}
-                {!userId && (
+                {!user && (
                     <a href="/login" className="font-semibold">
                         Login
                     </a>
